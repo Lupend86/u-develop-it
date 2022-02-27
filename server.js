@@ -23,60 +23,47 @@ const db = mysql.createConnection(
     console.log('Connected to the election database.')
 );
 
-// // Delete a candidate
-// app.delete('/api/candidate/:id', (req, res) => {
-//     const sql = `DELETE FROM candidates WHERE id = ?`;
-//     const params = [req.params.id];
+// Get all candidates
+app.get('/api/candidates', (req, res) => {
+   const sql = `SELECT candidates.*, parties.name
+                AS party_name
+                FROM candidates
+                LEFT JOIN parties
+                ON candidates.party_id = parties.id`;
 
-//     db.query(sql, params, (err, result) => {
-//         if (err) {
-//             res.statusMessage(400).json({ error: res.message });
-//         } else if (!result.affectedRows) {
-//           res.json({
-//               message: 'Candidate not found'
-//           });
-//         } else {
-//             res.json({
-//                 message: 'deleted',
-//                 changes: result.affectedRows,
-//                 id: req.params.id
-//             });
-//         }
-//     });
-// });
+   db.query(sql, (err, rows) => {
+      if (err) {
+          res.status(500).json({ error: err.message });
+          return;
+      }
+      res.json({
+          message: 'success',
+          data: rows
+      });
+   });
+});
 
-// // GET a single candidate
-// app.get('/api/candidate/:id', (req, res) => {
-//     const sql = `SELECT * FROM candidates WHERE id = ?`;
-//     const params = [req.params.id];
+// GET a single candidate
+app.get('/api/candidate/:id', (req, res) => {
+    const sql = `SELECT candidates.*, parties.name
+                 AS party_name
+                 FROM candidates
+                 LEFT JOIN parties
+                 ON candidates.party_id = parties.id
+                 WHERE candidates.id = ?`;
+    const params = [req.params.id];
 
-//     db.query(sql, params, (err, row) => {
-//         if (err) {
-//             res.status(400).json({ error: err.message });
-//             return;
-//         }
-//         res.json({
-//             message: 'success',
-//             data: row
-//         });
-//     });
-// });
-
-// // Get all candidates
-// app.get('/api/candidates', (req, res) => {
-//    const sql = `SELECT * FROM candidates`;
-
-//    db.query(sql, (err, rows) => {
-//       if (err) {
-//           res.status(500).json({ error: err.message });
-//           return;
-//       }
-//       res.json({
-//           message: 'success',
-//           data: rows
-//       });
-//    });
-// });
+    db.query(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({
+            message: 'success',
+            data: row
+        });
+    });
+});
 
 // Create a candidate
 app.post('/api/candidate', ({ body }, res) => {
@@ -99,6 +86,28 @@ app.post('/api/candidate', ({ body }, res) => {
         data: body
       });
    });
+});
+
+// Delete a candidate
+app.delete('/api/candidate/:id', (req, res) => {
+    const sql = `DELETE FROM candidates WHERE id = ?`;
+    const params = [req.params.id];
+
+    db.query(sql, params, (err, result) => {
+        if (err) {
+            res.statusMessage(400).json({ error: res.message });
+        } else if (!result.affectedRows) {
+          res.json({
+              message: 'Candidate not found'
+          });
+        } else {
+            res.json({
+                message: 'deleted',
+                changes: result.affectedRows,
+                id: req.params.id
+            });
+        }
+    });
 });
 
 // Default response for any other rewuest (Not Found)-catchall route
